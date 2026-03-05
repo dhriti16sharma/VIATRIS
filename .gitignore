@@ -1,0 +1,25 @@
+@"
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment variables — NEVER push this
+.env
+backend/.env
+
+# Next.js build output
+.next/
+frontend/.next/
+
+# Uploaded files
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+"@ | Out-File -FilePath ".gitignore" -Encoding UTF8

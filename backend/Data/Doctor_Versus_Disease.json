@@ -1,0 +1,162 @@
+[
+  {
+    "Drug Reaction": "Allergy",
+    "Allergist": "Allergist"
+  },
+  {
+    "Drug Reaction": "Hypertension",
+    "Allergist": "Cardiologist"
+  },
+  {
+    "Drug Reaction": "Heart attack",
+    "Allergist": "Cardiologist"
+  },
+  {
+    "Drug Reaction": "Psoriasis",
+    "Allergist": "Dermatologist"
+  },
+  {
+    "Drug Reaction": "Chicken pox",
+    "Allergist": "Dermatologist"
+  },
+  {
+    "Drug Reaction": "Acne",
+    "Allergist": "Dermatologist"
+  },
+  {
+    "Drug Reaction": "Impetigo",
+    "Allergist": "Dermatologist"
+  },
+  {
+    "Drug Reaction": "Fungal infection",
+    "Allergist": "Dermatologist"
+  },
+  {
+    "Drug Reaction": "Hypothyroidism",
+    "Allergist": "Endocrinologist"
+  },
+  {
+    "Drug Reaction": "Diabetes",
+    "Allergist": "Endocrinologist"
+  },
+  {
+    "Drug Reaction": "Hypoglycemia",
+    "Allergist": "Endocrinologist"
+  },
+  {
+    "Drug Reaction": "Hyperthyroidism",
+    "Allergist": "Endocrinologist"
+  },
+  {
+    "Drug Reaction": "GERD",
+    "Allergist": "Gastroenterologist"
+  },
+  {
+    "Drug Reaction": "Peptic ulcer diseae",
+    "Allergist": "Gastroenterologist"
+  },
+  {
+    "Drug Reaction": "Jaundice",
+    "Allergist": "Gastroenterologist"
+  },
+  {
+    "Drug Reaction": "Dimorphic hemmorhoids(piles)",
+    "Allergist": "Gastroenterologist�"
+  },
+  {
+    "Drug Reaction": "Gastroenteritis",
+    "Allergist": "Gastroenterologist"
+  },
+  {
+    "Drug Reaction": "Urinary tract infection",
+    "Allergist": "Gynecologist"
+  },
+  {
+    "Drug Reaction": "Chronic cholestasis",
+    "Allergist": "Hepatologist"
+  },
+  {
+    "Drug Reaction": "hepatitis A",
+    "Allergist": "Hepatologist"
+  },
+  {
+    "Drug Reaction": "Hepatitis B",
+    "Allergist": "hepatologist"
+  },
+  {
+    "Drug Reaction": "Hepatitis C",
+    "Allergist": "Hepatologist"
+  },
+  {
+    "Drug Reaction": "Hepatitis E",
+    "Allergist": "Hepatologist"
+  },
+  {
+    "Drug Reaction": "Hepatitis D",
+    "Allergist": "Hepatologist"
+  },
+  {
+    "Drug Reaction": "Alcoholic hepatitis",
+    "Allergist": "Hepatologist"
+  },
+  {
+    "Drug Reaction": "Malaria",
+    "Allergist": "Internal Medcine"
+  },
+  {
+    "Drug Reaction": "Dengue",
+    "Allergist": "Internal Medcine"
+  },
+  {
+    "Drug Reaction": "Migraine",
+    "Allergist": "Neurologist"
+  },
+  {
+    "Drug Reaction": "Cervical spondylosis",
+    "Allergist": "Neurologist"
+  },
+  {
+    "Drug Reaction": "Paralysis (brain hemorrhage)",
+    "Allergist": "Neurologist"
+  },
+  {
+    "Drug Reaction": "AIDS",
+    "Allergist": "Osteopathic"
+  },
+  {
+    "Drug Reaction": "(vertigo) Paroymsal  Positional Vertigo",
+    "Allergist": "Otolaryngologist"
+  },
+  {
+    "Drug Reaction": "Common Cold",
+    "Allergist": "Otolaryngologist"
+  },
+  {
+    "Drug Reaction": "Typhoid",
+    "Allergist": "Pediatrician"
+  },
+  {
+    "Drug Reaction": "Varicose veins",
+    "Allergist": "Phlebologist"
+  },
+  {
+    "Drug Reaction": "Bronchial Asthma",
+    "Allergist": "Pulmonologist"
+  },
+  {
+    "Drug Reaction": "Pneumonia",
+    "Allergist": "Pulmonologist"
+  },
+  {
+    "Drug Reaction": "Osteoarthristis",
+    "Allergist": "Rheumatologists"
+  },
+  {
+    "Drug Reaction": "Arthritis",
+    "Allergist": "Rheumatologists"
+  },
+  {
+    "Drug Reaction": "Tuberculosis",
+    "Allergist": "Tuberculosis"
+  }
+]

@@ -1,0 +1,522 @@
+[
+  {
+    "1": 2,
+    "abdominal_pain": "abnormal_menstruation"
+  },
+  {
+    "1": 3,
+    "abdominal_pain": "acidity"
+  },
+  {
+    "1": 4,
+    "abdominal_pain": "acute_liver_failure"
+  },
+  {
+    "1": 5,
+    "abdominal_pain": "altered_sensorium"
+  },
+  {
+    "1": 6,
+    "abdominal_pain": "anxiety"
+  },
+  {
+    "1": 7,
+    "abdominal_pain": "back_pain"
+  },
+  {
+    "1": 8,
+    "abdominal_pain": "belly_pain"
+  },
+  {
+    "1": 9,
+    "abdominal_pain": "blackheads"
+  },
+  {
+    "1": 10,
+    "abdominal_pain": "bladder_discomfort"
+  },
+  {
+    "1": 11,
+    "abdominal_pain": "blister"
+  },
+  {
+    "1": 12,
+    "abdominal_pain": "blood_in_sputum"
+  },
+  {
+    "1": 13,
+    "abdominal_pain": "bloody_stool"
+  },
+  {
+    "1": 14,
+    "abdominal_pain": "blurred_and_distorted_vision"
+  },
+  {
+    "1": 15,
+    "abdominal_pain": "breathlessness"
+  },
+  {
+    "1": 16,
+    "abdominal_pain": "brittle_nails"
+  },
+  {
+    "1": 17,
+    "abdominal_pain": "bruising"
+  },
+  {
+    "1": 18,
+    "abdominal_pain": "burning_micturition"
+  },
+  {
+    "1": 19,
+    "abdominal_pain": "chest_pain"
+  },
+  {
+    "1": 20,
+    "abdominal_pain": "chills"
+  },
+  {
+    "1": 21,
+    "abdominal_pain": "cold_hands_and_feets"
+  },
+  {
+    "1": 22,
+    "abdominal_pain": "coma"
+  },
+  {
+    "1": 23,
+    "abdominal_pain": "congestion"
+  },
+  {
+    "1": 24,
+    "abdominal_pain": "constipation"
+  },
+  {
+    "1": 25,
+    "abdominal_pain": "continuous_feel_of_urine"
+  },
+  {
+    "1": 26,
+    "abdominal_pain": "continuous_sneezing"
+  },
+  {
+    "1": 27,
+    "abdominal_pain": "cough"
+  },
+  {
+    "1": 28,
+    "abdominal_pain": "cramps"
+  },
+  {
+    "1": 29,
+    "abdominal_pain": "dark_urine"
+  },
+  {
+    "1": 30,
+    "abdominal_pain": "dehydration"
+  },
+  {
+    "1": 31,
+    "abdominal_pain": "depression"
+  },
+  {
+    "1": 32,
+    "abdominal_pain": "diarrhoea"
+  },
+  {
+    "1": 33,
+    "abdominal_pain": "dischromic _patches"
+  },
+  {
+    "1": 34,
+    "abdominal_pain": "distention_of_abdomen"
+  },
+  {
+    "1": 35,
+    "abdominal_pain": "dizziness"
+  },
+  {
+    "1": 36,
+    "abdominal_pain": "drying_and_tingling_lips"
+  },
+  {
+    "1": 37,
+    "abdominal_pain": "enlarged_thyroid"
+  },
+  {
+    "1": 38,
+    "abdominal_pain": "excessive_hunger"
+  },
+  {
+    "1": 39,
+    "abdominal_pain": "extra_marital_contacts"
+  },
+  {
+    "1": 40,
+    "abdominal_pain": "family_history"
+  },
+  {
+    "1": 41,
+    "abdominal_pain": "fast_heart_rate"
+  },
+  {
+    "1": 42,
+    "abdominal_pain": "fatigue"
+  },
+  {
+    "1": 43,
+    "abdominal_pain": "fluid_overload"
+  },
+  {
+    "1": 44,
+    "abdominal_pain": "foul_smell_of urine"
+  },
+  {
+    "1": 45,
+    "abdominal_pain": "headache"
+  },
+  {
+    "1": 46,
+    "abdominal_pain": "high_fever"
+  },
+  {
+    "1": 47,
+    "abdominal_pain": "hip_joint_pain"
+  },
+  {
+    "1": 48,
+    "abdominal_pain": "history_of_alcohol_consumption"
+  },
+  {
+    "1": 49,
+    "abdominal_pain": "increased_appetite"
+  },
+  {
+    "1": 50,
+    "abdominal_pain": "indigestion"
+  },
+  {
+    "1": 51,
+    "abdominal_pain": "inflammatory_nails"
+  },
+  {
+    "1": 52,
+    "abdominal_pain": "internal_itching"
+  },
+  {
+    "1": 53,
+    "abdominal_pain": "irregular_sugar_level"
+  },
+  {
+    "1": 54,
+    "abdominal_pain": "irritability"
+  },
+  {
+    "1": 55,
+    "abdominal_pain": "irritation_in_anus"
+  },
+  {
+    "1": 56,
+    "abdominal_pain": "joint_pain"
+  },
+  {
+    "1": 57,
+    "abdominal_pain": "knee_pain"
+  },
+  {
+    "1": 58,
+    "abdominal_pain": "lack_of_concentration"
+  },
+  {
+    "1": 59,
+    "abdominal_pain": "lethargy"
+  },
+  {
+    "1": 60,
+    "abdominal_pain": "loss_of_appetite"
+  },
+  {
+    "1": 61,
+    "abdominal_pain": "loss_of_balance"
+  },
+  {
+    "1": 62,
+    "abdominal_pain": "loss_of_smell"
+  },
+  {
+    "1": 63,
+    "abdominal_pain": "malaise"
+  },
+  {
+    "1": 64,
+    "abdominal_pain": "mild_fever"
+  },
+  {
+    "1": 65,
+    "abdominal_pain": "mood_swings"
+  },
+  {
+    "1": 66,
+    "abdominal_pain": "movement_stiffness"
+  },
+  {
+    "1": 67,
+    "abdominal_pain": "mucoid_sputum"
+  },
+  {
+    "1": 68,
+    "abdominal_pain": "muscle_pain"
+  },
+  {
+    "1": 69,
+    "abdominal_pain": "muscle_wasting"
+  },
+  {
+    "1": 70,
+    "abdominal_pain": "muscle_weakness"
+  },
+  {
+    "1": 71,
+    "abdominal_pain": "nausea"
+  },
+  {
+    "1": 72,
+    "abdominal_pain": "neck_pain"
+  },
+  {
+    "1": 73,
+    "abdominal_pain": "nodal_skin_eruptions"
+  },
+  {
+    "1": 74,
+    "abdominal_pain": "obesity"
+  },
+  {
+    "1": 75,
+    "abdominal_pain": "pain_behind_the_eyes"
+  },
+  {
+    "1": 76,
+    "abdominal_pain": "pain_during_bowel_movements"
+  },
+  {
+    "1": 77,
+    "abdominal_pain": "pain_in_anal_region"
+  },
+  {
+    "1": 78,
+    "abdominal_pain": "painful_walking"
+  },
+  {
+    "1": 79,
+    "abdominal_pain": "palpitations"
+  },
+  {
+    "1": 80,
+    "abdominal_pain": "passage_of_gases"
+  },
+  {
+    "1": 81,
+    "abdominal_pain": "patches_in_throat"
+  },
+  {
+    "1": 82,
+    "abdominal_pain": "phlegm"
+  },
+  {
+    "1": 83,
+    "abdominal_pain": "polyuria"
+  },
+  {
+    "1": 84,
+    "abdominal_pain": "prominent_veins_on_calf"
+  },
+  {
+    "1": 85,
+    "abdominal_pain": "puffy_face_and_eyes"
+  },
+  {
+    "1": 86,
+    "abdominal_pain": "pus_filled_pimples"
+  },
+  {
+    "1": 87,
+    "abdominal_pain": "receiving_blood_transfusion"
+  },
+  {
+    "1": 88,
+    "abdominal_pain": "receiving_unsterile_injections"
+  },
+  {
+    "1": 89,
+    "abdominal_pain": "red_sore_around_nose"
+  },
+  {
+    "1": 90,
+    "abdominal_pain": "red_spots_over_body"
+  },
+  {
+    "1": 91,
+    "abdominal_pain": "redness_of_eyes"
+  },
+  {
+    "1": 92,
+    "abdominal_pain": "restlessness"
+  },
+  {
+    "1": 93,
+    "abdominal_pain": "runny_nose"
+  },
+  {
+    "1": 94,
+    "abdominal_pain": "rusty_sputum"
+  },
+  {
+    "1": 95,
+    "abdominal_pain": "scurring"
+  },
+  {
+    "1": 96,
+    "abdominal_pain": "shivering"
+  },
+  {
+    "1": 97,
+    "abdominal_pain": "silver_like_dusting"
+  },
+  {
+    "1": 98,
+    "abdominal_pain": "sinus_pressure"
+  },
+  {
+    "1": 99,
+    "abdominal_pain": "skin_peeling"
+  },
+  {
+    "1": 100,
+    "abdominal_pain": "skin_rash"
+  },
+  {
+    "1": 101,
+    "abdominal_pain": "slurred_speech"
+  },
+  {
+    "1": 102,
+    "abdominal_pain": "small_dents_in_nails"
+  },
+  {
+    "1": 103,
+    "abdominal_pain": "spinning_movements"
+  },
+  {
+    "1": 104,
+    "abdominal_pain": "spotting_ urination"
+  },
+  {
+    "1": 105,
+    "abdominal_pain": "stiff_neck"
+  },
+  {
+    "1": 106,
+    "abdominal_pain": "stomach_bleeding"
+  },
+  {
+    "1": 107,
+    "abdominal_pain": "stomach_pain"
+  },
+  {
+    "1": 108,
+    "abdominal_pain": "sunken_eyes"
+  },
+  {
+    "1": 109,
+    "abdominal_pain": "sweating"
+  },
+  {
+    "1": 110,
+    "abdominal_pain": "swelled_lymph_nodes"
+  },
+  {
+    "1": 111,
+    "abdominal_pain": "swelling_joints"
+  },
+  {
+    "1": 112,
+    "abdominal_pain": "swelling_of_stomach"
+  },
+  {
+    "1": 113,
+    "abdominal_pain": "swollen_blood_vessels"
+  },
+  {
+    "1": 114,
+    "abdominal_pain": "swollen_extremeties"
+  },
+  {
+    "1": 115,
+    "abdominal_pain": "swollen_legs"
+  },
+  {
+    "1": 116,
+    "abdominal_pain": "throat_irritation"
+  },
+  {
+    "1": 117,
+    "abdominal_pain": "toxic_look_(typhos)"
+  },
+  {
+    "1": 118,
+    "abdominal_pain": "ulcers_on_tongue"
+  },
+  {
+    "1": 119,
+    "abdominal_pain": "unsteadiness"
+  },
+  {
+    "1": 120,
+    "abdominal_pain": "visual_disturbances"
+  },
+  {
+    "1": 121,
+    "abdominal_pain": "vomiting"
+  },
+  {
+    "1": 122,
+    "abdominal_pain": "watering_from_eyes"
+  },
+  {
+    "1": 123,
+    "abdominal_pain": "weakness_in_limbs"
+  },
+  {
+    "1": 124,
+    "abdominal_pain": "weakness_of_one_body_side"
+  },
+  {
+    "1": 125,
+    "abdominal_pain": "weight_gain"
+  },
+  {
+    "1": 126,
+    "abdominal_pain": "weight_loss"
+  },
+  {
+    "1": 127,
+    "abdominal_pain": "yellow_crust_ooze"
+  },
+  {
+    "1": 128,
+    "abdominal_pain": "yellow_urine"
+  },
+  {
+    "1": 129,
+    "abdominal_pain": "yellowing_of_eyes"
+  },
+  {
+    "1": 130,
+    "abdominal_pain": "yellowish_skin"
+  },
+  {
+    "1": 131,
+    "abdominal_pain": "itching"
+  }
+]
