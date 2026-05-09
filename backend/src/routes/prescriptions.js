@@ -4,10 +4,15 @@ const {
   createPrescription,
   getPrescriptions,
   getPrescription,
-  updatePrescription
+  updatePrescription,
+  getPrescriptionsByTokenIds
 } = require('../controllers/prescriptionController');
 const { protect, authorize } = require('../middleware/auth');
 
+// Public route — no auth — MUST be before router.use(protect)
+router.get('/public', getPrescriptionsByTokenIds);
+
+// All routes below require a valid JWT
 router.use(protect);
 
 router.route('/')

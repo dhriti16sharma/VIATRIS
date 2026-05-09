@@ -1,29 +1,43 @@
+const aiService = require('../services/aiService');
 const chatbotService = require('../services/chatbotService');
 
-// @desc    Chat with AI assistant
+// @desc    Chat with AI assistant (Viatris AI)
 // @route   POST /api/chatbot/message
 // @access  Public
 exports.sendMessage = async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, history = [] } = req.body;
 
     if (!message || message.trim() === '') {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide a message'
-      });
+      return res.status(400).json({ success: false, message: 'Please provide a message' });
     }
 
-    // Process message with chatbot service
-    const result = chatbotService.processMessage(message);
+    let botResponse;
+
+    // Use AI service if any provider key is configured, otherwise rule-based fallback
+    const hasAIProvider = process.env.GROQ_API_KEY || process.env.OPENROUTER_API_KEY ||
+                          process.env.GEMINI_API_KEY || process.env.COHERE_API_KEY;
+
+    if (hasAIProvider) {
+      try {
+        const result = await aiService.chatWithAI(message, history);
+        botResponse = result.message;
+      } catch (aiError) {
+        console.error('AI service failed, falling back to rule-based chatbot:', aiError.message);
+        const result = chatbotService.processMessage(message);
+        botResponse = result.response;
+      }
+    } else {
+      const result = chatbotService.processMessage(message);
+      botResponse = result.response;
+    }
 
     res.json({
       success: true,
       data: {
         userMessage: message,
-        botResponse: result.response,
-        type: result.type,
-        details: result.data
+        botResponse,
+        type: 'chat'
       }
     });
   } catch (error) {
@@ -42,28 +56,13 @@ exports.getChatbotInfo = async (req, res) => {
   res.json({
     success: true,
     data: {
-      name: 'HealthBot AI Assistant',
+      name: 'Viatris Health AI',
       capabilities: [
-        {
-          id: 1,
-          title: 'Doctor Recommendation',
-          description: 'Tell me your symptoms and I\'ll recommend which specialist to see',
-          example: 'I have chest pain and shortness of breath'
-        },
-        {
-          id: 2,
-          title: 'OTC Medications',
-          description: 'Get suggestions for over-the-counter medicines for common ailments',
-          example: 'What medicine for headache?'
-        },
-        {
-          id: 3,
-          title: 'Medical Terms Explanation',
-          description: 'Understand prescription terminology and medical jargon',
-          example: 'What does BID mean?'
-        }
+        { id: 1, title: 'Symptom Guidance', description: 'Understand what symptoms might indicate and when to see a doctor' },
+        { id: 2, title: 'Medical Terminology', description: 'Explain medical words and prescription terms in simple language' },
+        { id: 3, title: 'Wellness Tips', description: 'General advice on sleep, diet, exercise, and stress management' }
       ],
-      disclaimer: 'This AI assistant provides general information only and is not a substitute for professional medical advice. Always consult a qualified healthcare provider for medical concerns.'
+      disclaimer: 'Viatris AI provides general health information only and is not a substitute for professional medical advice.'
     }
   });
 };

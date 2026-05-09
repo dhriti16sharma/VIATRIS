@@ -13,7 +13,9 @@ const tokenSchema = new mongoose.Schema({
   otpVerified: { type: Boolean, default: false },
   status: { type: String, default: "pending" },
   notes: String,
-  meetLink: { type: String, default: '' }
+  meetLink: { type: String, default: '' },
+  portalOtp: { type: String, select: false },
+  portalOtpExpiry: { type: Date }
 }, { timestamps: true });
 
 module.exports = mongoose.model("Token", tokenSchema);

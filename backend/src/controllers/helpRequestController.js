@@ -1,4 +1,5 @@
 const HelpRequest = require('../models/HelpRequest');
+const PublicHelpRequest = require('../models/PublicHelpRequest');
 
 // @desc    Create help request
 // @route   POST /api/help-requests
@@ -132,7 +133,7 @@ exports.updateHelpRequest = async (req, res, next) => {
       });
     }
 
-    const { status, ngoNotes, resolution } = req.body;
+    const { status, ngoNotes, actionTaken, resolution } = req.body;
 
     // Auto-assign NGO if not already assigned
     if (!helpRequest.assignedNGO) {
@@ -140,8 +141,17 @@ exports.updateHelpRequest = async (req, res, next) => {
     }
 
     if (status) helpRequest.status = status;
-    if (ngoNotes) helpRequest.ngoNotes = ngoNotes;
+    if (ngoNotes !== undefined) helpRequest.ngoNotes = ngoNotes;
+    if (actionTaken !== undefined) helpRequest.actionTaken = actionTaken;
     if (resolution) helpRequest.resolution = resolution;
+
+    // Set timestamps based on status transitions
+    if (status === 'in-progress' && !helpRequest.contactedAt) {
+      helpRequest.contactedAt = new Date();
+    }
+    if (status === 'resolved') {
+      helpRequest.resolvedAt = new Date();
+    }
 
     await helpRequest.save();
 
@@ -154,6 +164,40 @@ exports.updateHelpRequest = async (req, res, next) => {
       success: true,
       data: helpRequest
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get all public help requests (from patient portal, no-auth flow)
+// @route   GET /api/help-requests/public-requests
+// @access  Private (NGO)
+exports.getPublicHelpRequestsForNGO = async (req, res, next) => {
+  try {
+    const { status } = req.query;
+    const query = status ? { status } : {};
+    const requests = await PublicHelpRequest.find(query).sort('-createdAt');
+    res.status(200).json({ success: true, count: requests.length, data: requests });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update a public help request status/notes
+// @route   PUT /api/help-requests/public-requests/:id
+// @access  Private (NGO)
+exports.updatePublicHelpRequest = async (req, res, next) => {
+  try {
+    const { status, ngoNotes, actionTaken } = req.body;
+    const request = await PublicHelpRequest.findById(req.params.id);
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+    if (status) request.status = status;
+    if (ngoNotes !== undefined) request.ngoNotes = ngoNotes;
+    if (actionTaken !== undefined) request.actionTaken = actionTaken;
+    await request.save();
+    res.status(200).json({ success: true, data: request });
   } catch (error) {
     next(error);
   }

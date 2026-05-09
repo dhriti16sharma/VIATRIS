@@ -16,7 +16,7 @@ const helpRequestSchema = new mongoose.Schema({
   },
   urgency: {
     type: String,
-    enum: ['low', 'medium', 'high'],
+    enum: ['low', 'medium', 'high', 'critical'],
     default: 'medium'
   },
   location: {
@@ -44,7 +44,10 @@ const helpRequestSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
-  ngoNotes: String,
+  ngoNotes: { type: String, default: '' },
+  actionTaken: { type: String, default: '' },
+  contactedAt: { type: Date },
+  resolvedAt: { type: Date },
   resolution: String,
   createdAt: {
     type: Date,

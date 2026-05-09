@@ -8,7 +8,7 @@ export default function AIChatbot() {
   const [messages, setMessages] = useState([
     {
       type: 'bot',
-      text: "👋 Hello! I'm your AI Health Assistant. I can help you with:\n\n1️⃣ Finding the right doctor for your symptoms\n2️⃣ Suggesting OTC medications\n3️⃣ Explaining medical terms\n\nHow can I assist you today?",
+      text: "Hi! I'm Viatris Health AI ✿  Ask me about symptoms, medications, wellness tips, or how to book an appointment. How can I help you today?",
       timestamp: new Date()
     }
   ]);
@@ -33,10 +33,10 @@ export default function AIChatbot() {
 
   // All handlers — unchanged
   const handleSendMessage = async (messageText = inputMessage) => {
-    if (!messageText.trim()) return;
+    if (!messageText.trim() || isTyping) return;
     const userMessage = { type: 'user', text: messageText, timestamp: new Date() };
     setMessages(prev => [...prev, userMessage]);
-    setInputMessage('');
+    setInputMessage(''); // clear immediately before async work
     setIsTyping(true);
     try {
       const response = await axios.post('http://localhost:5000/api/chatbot/message', { message: messageText });
@@ -94,7 +94,7 @@ export default function AIChatbot() {
                 </svg>
               </div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 15 }}>HealthBot AI</div>
+                <div style={{ fontWeight: 700, fontSize: 15 }}>Viatris Health AI</div>
                 <div style={{ fontSize: 11, opacity: 0.8 }}>Always here to help</div>
               </div>
             </div>
@@ -120,7 +120,7 @@ export default function AIChatbot() {
                   {msg.type === 'bot' && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                       <div style={{ width: 20, height: 20, background: 'rgba(125,155,118,0.15)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>🤖</div>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: '#7D9B76' }}>HealthBot</span>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#7D9B76' }}>Viatris AI</span>
                     </div>
                   )}
                   <div style={{ fontSize: 13, lineHeight: 1.65, whiteSpace: 'pre-line' }}>{msg.text}</div>
@@ -162,8 +162,8 @@ export default function AIChatbot() {
           {/* Input */}
           <div style={{ padding: '12px 16px', background: 'white', borderTop: '1px solid #F2EDE3', flexShrink: 0 }}>
             <div style={{ display: 'flex', gap: 8 }}>
-              <input type="text" value={inputMessage} onChange={e => setInputMessage(e.target.value)} onKeyPress={handleKeyPress} placeholder="Type your message..."
-                style={{ flex: 1, padding: '11px 16px', border: '1.5px solid #E8E0D4', borderRadius: 22, fontSize: 13, fontFamily: "'DM Sans',sans-serif", outline: 'none', color: '#2C2C2C', background: '#FDFCFA' }} />
+              <input type="text" value={inputMessage} onChange={e => setInputMessage(e.target.value)} onKeyPress={handleKeyPress} placeholder="Type your message..." disabled={isTyping}
+                style={{ flex: 1, padding: '11px 16px', border: '1.5px solid #E8E0D4', borderRadius: 22, fontSize: 13, fontFamily: "'DM Sans',sans-serif", outline: 'none', color: '#2C2C2C', background: isTyping ? '#F2EDE3' : '#FDFCFA' }} />
               <button onClick={() => handleSendMessage()} disabled={!inputMessage.trim() || isTyping}
                 style={{ width: 42, height: 42, background: inputMessage.trim() ? 'linear-gradient(135deg,#7D9B76,#4A6B44)' : '#DDD5C8', border: 'none', borderRadius: '50%', cursor: inputMessage.trim() ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s' }}>
                 <svg width="18" height="18" fill="none" stroke="white" viewBox="0 0 24 24">

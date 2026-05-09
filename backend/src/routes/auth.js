@@ -38,6 +38,7 @@ router.post("/register", upload.single("image"), async (req, res) => {
         return res.status(400).json({ success: false, message: "NGO name required" });
       }
       userData.ngoName = ngoName;
+      if (req.file) userData.profileImage = `/uploads/${req.file.filename}`;
     }
 
     const user = await User.create(userData);

@@ -5,7 +5,9 @@ const {
   getHelpRequests,
   getHelpRequest,
   updateHelpRequest,
-  getNearbyRequests
+  getNearbyRequests,
+  getPublicHelpRequestsForNGO,
+  updatePublicHelpRequest
 } = require('../controllers/helpRequestController');
 const { protect, authorize } = require('../middleware/auth');
 
@@ -16,6 +18,12 @@ router.route('/')
   .post(authorize('patient'), createHelpRequest);
 
 router.get('/nearby/:distance', authorize('ngo'), getNearbyRequests);
+
+router.route('/public-requests')
+  .get(authorize('ngo'), getPublicHelpRequestsForNGO);
+
+router.route('/public-requests/:id')
+  .put(authorize('ngo'), updatePublicHelpRequest);
 
 router.route('/:id')
   .get(getHelpRequest)

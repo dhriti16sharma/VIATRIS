@@ -5,8 +5,18 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/database');
 const errorHandler = require('./middleware/errorHandler');
+
+// Strict rate limiter for OTP endpoints — 5 attempts per 15 minutes per IP
+const otpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { success: false, message: 'Too many OTP attempts. Please wait 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
 // Connect to database
 connectDB();
@@ -39,6 +49,9 @@ if (process.env.NODE_ENV === 'development') {
 
 // Mount routers
 app.use('/api/auth', require('./routes/auth'));
+
+// Apply OTP rate limiter to booking and OTP verification only
+app.use(['/api/public/book-appointment', '/api/public/verify-otp'], otpLimiter);
 app.use('/api/public', require('./routes/public'));
 app.use('/api/tokens', require('./routes/tokens'));
 app.use('/api/doctors', require('./routes/doctors'));

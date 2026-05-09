@@ -55,9 +55,19 @@ export default function Home() {
   const [showOTP, setShowOTP] = useState(false);
   const [otp, setOtp] = useState('');
   const [tokenNumber, setTokenNumber] = useState('');
+  const [devOtp, setDevOtp] = useState('');
   const [loginData, setLoginData] = useState({ email: '', password: '', role: 'doctor' });
   const [signupData, setSignupData] = useState({ name: '', email: '', password: '', phone: '', role: 'doctor', specialization: '', experience: '', ngoName: '', image: null });
   const [imagePreview, setImagePreview] = useState('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
+  const [confirmedBooking, setConfirmedBooking] = useState(null);
+  const [ngoForm, setNgoForm] = useState({ name: '', phone: '', email: '', helpType: 'general', message: '' });
+  const [ngoSubmitted, setNgoSubmitted] = useState(false);
+  const [ngoLoading, setNgoLoading] = useState(false);
+  const [ngoError, setNgoError] = useState('');
+  const [resendTimer, setResendTimer] = useState(30);
+  const [canResend, setCanResend] = useState(false);
 
   const specializations = [
     { value: 'Cardiologist',      en: 'Cardiologist',       hi: 'हृदय रोग विशेषज्ञ', descEn: 'Heart checkup',   descHi: 'हृदय जांच',    icon: '🫀' },
@@ -74,6 +84,49 @@ export default function Home() {
     }
   }, [booking.specialization]);
 
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key !== 'Escape') return;
+      setShowLogin(false);
+      setShowSignup(false);
+      setShowOTP(false);
+      setImagePreview('');
+      setDevOtp('');
+      setOtp('');
+      setShowLoginPassword(false);
+      setShowSignupPassword(false);
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, []);
+
+  // ── OTP resend countdown ───────────────────────────────────────────────
+  useEffect(() => {
+    if (!showOTP || confirmedBooking) return;
+    setResendTimer(30);
+    setCanResend(false);
+    const interval = setInterval(() => {
+      setResendTimer(prev => {
+        if (prev <= 1) { clearInterval(interval); setCanResend(true); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [showOTP]);
+
+  const handleResendOTP = async () => {
+    try {
+      const res = await axios.post('http://localhost:5000/api/public/resend-otp', {
+        tokenNumber, phone: booking.phone
+      });
+      if (res.data.otp) setDevOtp(res.data.otp);
+      setResendTimer(30);
+      setCanResend(false);
+    } catch (err) {
+      console.error('Resend failed:', err.response?.data?.message || err.message);
+    }
+  };
+
   // ── ALL HANDLERS UNCHANGED ─────────────────────────────────────────────
   const handleBooking = async (e) => {
     e.preventDefault();
@@ -87,6 +140,7 @@ export default function Home() {
         doctorId: doctorId, appointmentDate: booking.date
       });
       setTokenNumber(response.data.data.tokenNumber);
+      setDevOtp(response.data.data.otp || '');
       setShowOTP(true);
       alert(language === "en"
         ? `Booking successful! Token: ${response.data.data.tokenNumber}. Check console for OTP.`
@@ -101,9 +155,13 @@ export default function Home() {
       const res = await axios.post("http://localhost:5000/api/public/verify-otp", {
         tokenNumber: tokenNumber, otp: otp, phone: booking.phone
       });
-      alert(`✅ Appointment Confirmed! Token: ${res.data.data.tokenNumber}`);
-      setShowOTP(false);
-      setBooking({ name: "", phone: "", address: "", email: "", specialization: "", doctorId: "", date: "" });
+      sessionStorage.setItem('patientPortalSession', JSON.stringify({
+        phone: booking.phone,
+        patientName: booking.name,
+        expiry: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString()
+      }));
+      setConfirmedBooking({ tokenNumber: res.data.data.tokenNumber, name: booking.name });
+      setDevOtp('');
     } catch (error) {
       alert("❌ Invalid OTP");
     }
@@ -139,6 +197,7 @@ export default function Home() {
       if (signupData.image) formData.append('image', signupData.image);
     } else if (signupData.role === 'ngo') {
       formData.append('ngoName', signupData.ngoName);
+      if (signupData.image) formData.append('image', signupData.image);
     }
     try {
       const res = await axios.post('http://localhost:5000/api/auth/register', formData, {
@@ -154,6 +213,18 @@ export default function Home() {
       console.error('Signup error:', error.response?.data);
       alert('Signup failed: ' + (error.response?.data?.message || error.message));
     }
+  };
+
+  const handleNgoSubmit = async (e) => {
+    e.preventDefault();
+    setNgoLoading(true);
+    setNgoError('');
+    try {
+      await axios.post('http://localhost:5000/api/public/help-request', ngoForm);
+      setNgoSubmitted(true);
+    } catch (err) {
+      setNgoError(err.response?.data?.message || 'Failed to submit request. Please try again.');
+    } finally { setNgoLoading(false); }
   };
 
   const t = (key) => {
@@ -358,6 +429,88 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── NGO HELP SECTION ── */}
+      <section style={{ padding: '72px 32px', background: 'white' }}>
+        <div style={{ maxWidth: 600, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 44 }}>
+            <div style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'5px 14px', background:'rgba(125,155,118,0.12)', borderRadius:20, marginBottom:16 }}>
+              <span style={{ fontSize:13, color:'#4A6B44', fontWeight:500 }}>🤝 {hi ? 'एनजीओ सहायता' : 'NGO Support'}</span>
+            </div>
+            <h2 style={{ fontFamily:"'DM Serif Display',serif", fontSize:34, color:'#2C2C2C', marginBottom:10 }}>
+              {hi ? 'सहायता की ज़रूरत है?' : 'Need Support?'}
+            </h2>
+            <p style={{ color:'#9C9C9C', fontSize:15, lineHeight:1.7, maxWidth:440, margin:'0 auto' }}>
+              {hi
+                ? 'हमारे NGO भागीदार वित्तीय सहायता, दवा, परिवहन और मानसिक स्वास्थ्य सेवाओं के लिए उपलब्ध हैं।'
+                : 'Our NGO partners are available to help with financial aid, medicine access, transport, and mental health support.'}
+            </p>
+          </div>
+
+          {!ngoSubmitted ? (
+            <div style={{ background:'white', borderRadius:24, padding:'44px 40px', boxShadow:'0 8px 40px rgba(44,44,44,0.07)', border:'1px solid rgba(196,168,130,0.15)' }}>
+              <form onSubmit={handleNgoSubmit} style={{ display:'flex', flexDirection:'column', gap:14 }}>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                  <div>
+                    <label style={S.label}>{t('name')}</label>
+                    <input type="text" value={ngoForm.name} onChange={e => setNgoForm(p => ({ ...p, name: e.target.value }))}
+                      placeholder={hi ? 'आपका नाम' : 'Full name'} style={S.inp} required />
+                  </div>
+                  <div>
+                    <label style={S.label}>{t('phone')}</label>
+                    <input type="tel" value={ngoForm.phone} onChange={e => setNgoForm(p => ({ ...p, phone: e.target.value }))}
+                      placeholder="+91 00000 00000" style={S.inp} required />
+                  </div>
+                </div>
+                <div>
+                  <label style={S.label}>{t('email')}</label>
+                  <input type="email" value={ngoForm.email} onChange={e => setNgoForm(p => ({ ...p, email: e.target.value }))}
+                    placeholder="you@email.com (optional)" style={S.inp} />
+                </div>
+                <div>
+                  <label style={S.label}>{hi ? 'सहायता का प्रकार' : 'Type of Help'}</label>
+                  <select value={ngoForm.helpType} onChange={e => setNgoForm(p => ({ ...p, helpType: e.target.value }))}
+                    style={{ ...S.inp, appearance:'none' }}>
+                    <option value="general">🤝 {hi ? 'सामान्य सहायता' : 'General Support'}</option>
+                    <option value="financial">💰 {hi ? 'वित्तीय सहायता' : 'Financial Aid'}</option>
+                    <option value="medicine">💊 {hi ? 'दवा सहायता' : 'Medicine Access'}</option>
+                    <option value="transport">🚗 {hi ? 'परिवहन सहायता' : 'Transport Assistance'}</option>
+                    <option value="mental_health">🧠 {hi ? 'मानसिक स्वास्थ्य' : 'Mental Health Support'}</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={S.label}>{hi ? 'अपनी स्थिति बताएं' : 'Describe your situation'}</label>
+                  <textarea value={ngoForm.message} onChange={e => setNgoForm(p => ({ ...p, message: e.target.value }))}
+                    rows={4} style={{ ...S.inp, resize:'vertical' }}
+                    placeholder={hi ? 'हम कैसे मदद कर सकते हैं...' : 'Tell us how we can help you...'} required />
+                </div>
+                {ngoError && (
+                  <div style={{ padding:'10px 14px', background:'#FEE2E2', borderRadius:10, fontSize:13, color:'#9B2C2C' }}>{ngoError}</div>
+                )}
+                <button type="submit" disabled={ngoLoading} style={{ ...S.btnPrimary, opacity: ngoLoading ? 0.65 : 1 }}>
+                  {ngoLoading ? (hi ? 'भेजा जा रहा है...' : 'Submitting...') : (hi ? '🤝 सहायता अनुरोध भेजें' : '🤝 Submit Help Request')}
+                </button>
+              </form>
+            </div>
+          ) : (
+            <div style={{ background:'white', borderRadius:24, padding:'52px 40px', boxShadow:'0 8px 40px rgba(44,44,44,0.07)', border:'1px solid rgba(196,168,130,0.15)', textAlign:'center' }}>
+              <div style={{ fontSize:56, marginBottom:16 }}>✅</div>
+              <h3 style={{ fontFamily:"'DM Serif Display',serif", fontSize:26, color:'#2C2C2C', marginBottom:10 }}>
+                {hi ? 'अनुरोध सबमिट हो गया!' : 'Request Submitted!'}
+              </h3>
+              <p style={{ color:'#9C9C9C', fontSize:14, lineHeight:1.7, maxWidth:360, margin:'0 auto 24px' }}>
+                {hi
+                  ? 'एक NGO प्रतिनिधि 24 घंटों के भीतर आपसे संपर्क करेगा।'
+                  : 'An NGO representative will contact you within 24 hours.'}
+              </p>
+              <button onClick={() => { setNgoSubmitted(false); setNgoForm({ name:'', phone:'', email:'', helpType:'general', message:'' }); }}
+                style={{ padding:'12px 28px', background:'#F2EDE3', color:'#5C5C5C', border:'none', borderRadius:12, fontSize:14, fontWeight:600, cursor:'pointer', fontFamily:"'DM Sans',sans-serif" }}>
+                {hi ? 'और अनुरोध भेजें' : 'Submit Another Request'}
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* ── FOOTER ── */}
       <footer style={{ background: '#2C2C2C', color: 'white', padding: '44px 32px', textAlign: 'center' }}>
         <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 26, marginBottom: 8 }}>Viatris<span style={{ color: '#7D9B76' }}>Health</span></div>
@@ -366,30 +519,75 @@ export default function Home() {
 
       {/* ── OTP MODAL ── */}
       {showOTP && (
-        <div style={S.overlay}>
-          <div style={S.card}>
-            <div style={{ textAlign: 'center', marginBottom: 30 }}>
-              <div style={{ fontSize: 46, marginBottom: 14 }}>📱</div>
-              <h3 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 26, color: '#2C2C2C', marginBottom: 8 }}>{t('enterOTP')}</h3>
-              <p style={{ color: '#9C9C9C', fontSize: 14 }}>Token: <strong style={{ color: '#7D9B76' }}>{tokenNumber}</strong></p>
-            </div>
-            <input type="text" maxLength="6" value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ''))} placeholder="000000"
-              style={{ ...S.inp, textAlign: 'center', fontSize: 28, letterSpacing: 14, fontFamily: 'monospace', marginBottom: 18, padding: '16px' }} />
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={handleVerifyOTP} disabled={otp.length !== 6}
-                style={{ flex: 1, padding: '13px', background: otp.length === 6 ? '#7D9B76' : '#DDD5C8', color: 'white', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: otp.length === 6 ? 'pointer' : 'not-allowed', fontFamily: "'DM Sans', sans-serif" }}>
-                {t('verify')}
-              </button>
-              <button onClick={() => setShowOTP(false)} style={S.btnGhost}>Cancel</button>
-            </div>
+        <div style={S.overlay} onClick={() => { if (!confirmedBooking) { setShowOTP(false); setDevOtp(''); setOtp(''); } }}>
+          <div style={S.card} onClick={e => e.stopPropagation()}>
+            {confirmedBooking ? (
+              /* Confirmation state */
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 52, marginBottom: 14 }}>✅</div>
+                <h3 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 26, color: '#2C2C2C', marginBottom: 8 }}>Appointment Confirmed!</h3>
+                <p style={{ color: '#9C9C9C', fontSize: 14, marginBottom: 6 }}>
+                  Token: <strong style={{ color: '#7D9B76', fontSize: 18 }}>#{confirmedBooking.tokenNumber}</strong>
+                </p>
+                {confirmedBooking.name && <p style={{ color: '#5C5C5C', fontSize: 14, marginBottom: 24 }}>Booked for: {confirmedBooking.name}</p>}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
+                  <button onClick={() => {
+                    setShowOTP(false);
+                    setConfirmedBooking(null);
+                    setOtp('');
+                    setBooking({ name: "", phone: "", address: "", email: "", specialization: "", doctorId: "", date: "" });
+                  }} style={{ ...S.btnPrimary }}>
+                    Done
+                  </button>
+                  <button onClick={() => router.push('/patient/dashboard')}
+                    style={{ ...S.btnGhost, width: '100%', textAlign: 'center' }}>
+                    View My Portal →
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* OTP entry state */
+              <>
+                <div style={{ textAlign: 'center', marginBottom: 30 }}>
+                  <div style={{ fontSize: 46, marginBottom: 14 }}>📱</div>
+                  <h3 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 26, color: '#2C2C2C', marginBottom: 8 }}>{t('enterOTP')}</h3>
+                  <p style={{ color: '#9C9C9C', fontSize: 14 }}>Token: <strong style={{ color: '#7D9B76' }}>{tokenNumber}</strong></p>
+                </div>
+                {devOtp && (
+                  <div style={{ background: '#FFFBEB', border: '1.5px solid #F6D860', borderRadius: 10, padding: '10px 16px', marginBottom: 16, textAlign: 'center' }}>
+                    <span style={{ fontSize: 13, color: '#92610A', fontWeight: 600 }}>Demo Mode — Your OTP is: </span>
+                    <span style={{ fontSize: 18, fontFamily: 'monospace', fontWeight: 700, color: '#92610A', letterSpacing: 6 }}>{devOtp}</span>
+                  </div>
+                )}
+                <input type="text" maxLength="6" value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ''))} placeholder="000000"
+                  style={{ ...S.inp, textAlign: 'center', fontSize: 28, letterSpacing: 14, fontFamily: 'monospace', marginBottom: 18, padding: '16px' }} />
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button onClick={handleVerifyOTP} disabled={otp.length !== 6}
+                    style={{ flex: 1, padding: '13px', background: otp.length === 6 ? '#7D9B76' : '#DDD5C8', color: 'white', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: otp.length === 6 ? 'pointer' : 'not-allowed', fontFamily: "'DM Sans', sans-serif" }}>
+                    {t('verify')}
+                  </button>
+                  <button onClick={() => { setShowOTP(false); setDevOtp(''); setOtp(''); }} style={S.btnGhost}>Cancel</button>
+                </div>
+                <div style={{ textAlign: 'center', marginTop: 14, fontSize: 13 }}>
+                  {canResend ? (
+                    <button onClick={handleResendOTP}
+                      style={{ background: 'none', border: 'none', color: '#7D9B76', fontWeight: 600, cursor: 'pointer', fontSize: 13, textDecoration: 'underline', fontFamily: "'DM Sans', sans-serif" }}>
+                      Resend OTP
+                    </button>
+                  ) : (
+                    <span style={{ color: '#9C9C9C' }}>Resend OTP in {resendTimer}s</span>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
 
       {/* ── LOGIN MODAL ── */}
       {showLogin && (
-        <div style={S.overlay}>
-          <div style={S.card}>
+        <div style={S.overlay} onClick={() => { setShowLogin(false); setShowLoginPassword(false); }}>
+          <div style={S.card} onClick={e => e.stopPropagation()}>
             <div style={{ marginBottom: 28 }}>
               <h3 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 28, color: '#2C2C2C', marginBottom: 5 }}>{t('loginTitle')}</h3>
               <p style={{ color: '#9C9C9C', fontSize: 13 }}>{hi ? 'अपने खाते में साइन इन करें' : 'Sign in to your account'}</p>
@@ -408,13 +606,19 @@ export default function Home() {
               </div>
               <div>
                 <label style={S.label}>Password</label>
-                <input type="password" placeholder="••••••••" value={loginData.password} onChange={e => setLoginData({ ...loginData, password: e.target.value })} style={S.inp} required />
+                <div style={{ position: 'relative' }}>
+                  <input type={showLoginPassword ? 'text' : 'password'} placeholder="••••••••" value={loginData.password} onChange={e => setLoginData({ ...loginData, password: e.target.value })} style={{ ...S.inp, paddingRight: 44 }} required />
+                  <button type="button" onClick={() => setShowLoginPassword(v => !v)}
+                    style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9C9C9C', fontSize: 18, padding: 4, lineHeight: 1 }}>
+                    {showLoginPassword ? '🙈' : '👁'}
+                  </button>
+                </div>
               </div>
               <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
                 <button type="submit" style={{ flex: 1, padding: '13px', background: '#7D9B76', color: 'white', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
                   {t('loginTitle')}
                 </button>
-                <button type="button" onClick={() => setShowLogin(false)} style={S.btnGhost}>Cancel</button>
+                <button type="button" onClick={() => { setShowLogin(false); setShowLoginPassword(false); }} style={S.btnGhost}>Cancel</button>
               </div>
             </form>
           </div>
@@ -423,8 +627,8 @@ export default function Home() {
 
       {/* ── SIGNUP MODAL ── */}
       {showSignup && (
-        <div style={{ ...S.overlay, overflowY: 'auto', alignItems: 'flex-start' }}>
-          <div style={{ ...S.card, maxWidth: 480, margin: '24px auto' }}>
+        <div style={{ ...S.overlay, overflowY: 'auto', alignItems: 'flex-start' }} onClick={() => { setShowSignup(false); setImagePreview(''); setShowSignupPassword(false); }}>
+          <div style={{ ...S.card, maxWidth: 480, margin: '24px auto' }} onClick={e => e.stopPropagation()}>
             <div style={{ marginBottom: 28 }}>
               <h3 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 28, color: '#2C2C2C', marginBottom: 5 }}>{t('signupTitle')}</h3>
               <p style={{ color: '#9C9C9C', fontSize: 13 }}>{hi ? 'नया खाता बनाएं' : 'Create your account'}</p>
@@ -481,22 +685,43 @@ export default function Home() {
               )}
 
               {signupData.role === 'ngo' && (
-                <div>
-                  <label style={S.label}>{t('ngoName')}</label>
-                  <input type="text" placeholder={hi ? 'एनजीओ का नाम' : 'NGO organisation name'} value={signupData.ngoName} onChange={e => setSignupData({ ...signupData, ngoName: e.target.value })} style={S.inp} required />
-                </div>
+                <>
+                  <div>
+                    <label style={S.label}>{t('ngoName')}</label>
+                    <input type="text" placeholder={hi ? 'एनजीओ का नाम' : 'NGO organisation name'} value={signupData.ngoName} onChange={e => setSignupData({ ...signupData, ngoName: e.target.value })} style={S.inp} required />
+                  </div>
+                  <div>
+                    <label style={S.label}>NGO Logo / Profile Photo</label>
+                    {imagePreview && <img src={imagePreview} style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', border: '3px solid #B5CDB0', marginBottom: 10, display: 'block' }} alt="Preview" />}
+                    <input type="file" accept="image/*" onChange={e => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        setSignupData({ ...signupData, image: file });
+                        const reader = new FileReader();
+                        reader.onloadend = () => setImagePreview(reader.result);
+                        reader.readAsDataURL(file);
+                      }
+                    }} style={{ fontSize: 13, color: '#5C5C5C' }} />
+                  </div>
+                </>
               )}
 
               <div>
                 <label style={S.label}>Password</label>
-                <input type="password" placeholder="Min 6 characters" value={signupData.password} onChange={e => setSignupData({ ...signupData, password: e.target.value })} style={S.inp} required minLength="6" />
+                <div style={{ position: 'relative' }}>
+                  <input type={showSignupPassword ? 'text' : 'password'} placeholder="Min 6 characters" value={signupData.password} onChange={e => setSignupData({ ...signupData, password: e.target.value })} style={{ ...S.inp, paddingRight: 44 }} required minLength="6" />
+                  <button type="button" onClick={() => setShowSignupPassword(v => !v)}
+                    style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9C9C9C', fontSize: 18, padding: 4, lineHeight: 1 }}>
+                    {showSignupPassword ? '🙈' : '👁'}
+                  </button>
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
                 <button type="submit" style={{ flex: 1, padding: '13px', background: '#7D9B76', color: 'white', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}>
                   {t('signupTitle')}
                 </button>
-                <button type="button" onClick={() => { setShowSignup(false); setImagePreview(''); }} style={S.btnGhost}>Cancel</button>
+                <button type="button" onClick={() => { setShowSignup(false); setImagePreview(''); setShowSignupPassword(false); }} style={S.btnGhost}>Cancel</button>
               </div>
             </form>
           </div>

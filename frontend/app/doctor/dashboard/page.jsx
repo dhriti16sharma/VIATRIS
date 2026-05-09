@@ -15,7 +15,16 @@ export default function DoctorDashboard() {
   const [editStatus, setEditStatus] = useState('');
   const [editMeetLink, setEditMeetLink] = useState('');
   const [loading, setLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
   const [activeTab, setActiveTab] = useState('appointments');
+
+  const [meetEditing, setMeetEditing] = useState({})
+  const [meetInputs, setMeetInputs] = useState({})
+
+  // Filter state for appointments tab
+  const [filterStatus, setFilterStatus] = useState('all')
+  const [filterDate, setFilterDate] = useState('')
+  const [searchName, setSearchName] = useState('')
 
   // Prescription state
   const [prescriptionFor, setPrescriptionFor] = useState(null); // token obj
@@ -47,7 +56,29 @@ export default function DoctorDashboard() {
     };
   }, []);
 
-  useEffect(() => { loadProfile(); loadTokens(); }, []);
+  const loadReportsFromStorage = () => {
+    try {
+      const stored = localStorage.getItem('patientReports');
+      if (stored) setPatientReports(JSON.parse(stored));
+    } catch(e) {}
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) { router.replace('/'); return; }
+    const role = localStorage.getItem('userRole');
+    if (role !== 'doctor') { router.replace('/'); return; }
+    setAuthChecked(true);
+    loadReportsFromStorage();
+    loadProfile();
+    loadTokens();
+    loadPrescriptions();
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(loadReportsFromStorage, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const getAuthHeader = () => ({
     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
@@ -56,12 +87,12 @@ export default function DoctorDashboard() {
   const loadProfile = async () => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) { router.push('/'); return; }
+      if (!token) { router.replace('/'); return; }
       const res = await axios.get(`${API}/api/auth/me`, getAuthHeader());
       setDoctorProfile(res.data.data);
       setLoading(false);
     } catch (err) {
-      if (err.response?.status === 401) { localStorage.clear(); router.push('/'); }
+      if (err.response?.status === 401) { localStorage.clear(); router.replace('/'); }
     }
   };
 
@@ -83,25 +114,66 @@ export default function DoctorDashboard() {
   };
 
   const handleDeleteToken = async (tokenId) => {
-    if (!confirm('Delete this appointment?')) return;
+    const tkn = tokens.find(t => t._id === tokenId);
+    if (!confirm(`Delete appointment for ${tkn?.patient?.name} — Token #${tkn?.tokenNumber}?\nThis cannot be undone.`)) return;
     try {
       await axios.delete(`${API}/api/tokens/${tokenId}`, getAuthHeader());
       loadTokens();
     } catch (err) { alert('Delete failed: ' + err.message); }
   };
 
-  const handleLogout = () => { localStorage.clear(); router.push('/'); };
+  const handleLogout = () => { localStorage.clear(); router.replace('/'); };
 
   // ── Prescription handlers ────────────────────────────────────────
-  const savePrescription = (tokenId) => {
+  const loadPrescriptions = async () => {
+    try {
+      const res = await axios.get(`${API}/api/prescriptions`, getAuthHeader());
+      const rxMap = {};
+      (res.data.data || []).forEach(p => {
+        if (p.token?._id) {
+          rxMap[p.token._id] = {
+            diagnosis: p.diagnosis || '',
+            medications: p.medicationsText || '',
+            instructions: p.additionalInstructions || '',
+            followUp: p.followUpDate ? p.followUpDate.split('T')[0] : '',
+            savedAt: new Date(p.createdAt).toLocaleString()
+          };
+        }
+      });
+      setSavedRx(rxMap);
+    } catch (err) { console.error('loadPrescriptions error:', err); }
+  };
+
+  const savePrescription = async (tokenId) => {
     if (!rxData.diagnosis || !rxData.medications) {
       alert('Please fill in diagnosis and medications at minimum.');
       return;
     }
-    setSavedRx(prev => ({ ...prev, [tokenId]: { ...rxData, savedAt: new Date().toLocaleString() } }));
-    alert('✅ Prescription saved successfully!');
-    setPrescriptionFor(null);
-    setRxData({ diagnosis: '', medications: '', instructions: '', followUp: '' });
+    try {
+      const res = await axios.post(`${API}/api/prescriptions`, {
+        tokenId,
+        diagnosis: rxData.diagnosis,
+        medications: rxData.medications,
+        instructions: rxData.instructions,
+        followUpDate: rxData.followUp || undefined
+      }, getAuthHeader());
+      const p = res.data.data;
+      setSavedRx(prev => ({
+        ...prev,
+        [tokenId]: {
+          diagnosis: p.diagnosis,
+          medications: p.medicationsText || rxData.medications,
+          instructions: p.additionalInstructions || '',
+          followUp: p.followUpDate ? p.followUpDate.split('T')[0] : '',
+          savedAt: new Date(p.createdAt).toLocaleString()
+        }
+      }));
+      alert('✅ Prescription saved successfully!');
+      setPrescriptionFor(null);
+      setRxData({ diagnosis: '', medications: '', instructions: '', followUp: '' });
+    } catch (err) {
+      alert('Failed to save prescription: ' + (err.response?.data?.message || err.message));
+    }
   };
 
   // ── Report upload handlers (client-side) ─────────────────────────
@@ -136,6 +208,13 @@ export default function DoctorDashboard() {
     cursor: 'pointer', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap'
   });
 
+  const filteredTokens = tokens
+    .filter(tkn => filterStatus === 'all' || tkn.status === filterStatus)
+    .filter(tkn => !filterDate || (tkn.appointmentDate || '').slice(0, 10) === filterDate)
+    .filter(tkn => !searchName || tkn.patient?.name?.toLowerCase().includes(searchName.toLowerCase()));
+
+  if (!authChecked) return null;
+
   if (loading) return (
     <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#FDFCFA' }}>
       <div style={{ fontSize:24, color:'#7D9B76' }}>Loading...</div>
@@ -167,7 +246,7 @@ export default function DoctorDashboard() {
       {/* ── HEADER ── */}
       <header style={{ background:'white', borderBottom:'1px solid #E8E0D4', padding:'18px 0' }}>
         <div style={{ maxWidth:1200, margin:'0 auto', padding:'0 24px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:16 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:16, cursor:'pointer' }} onClick={() => router.push('/')}>
             {doctorProfile.profileImage ? (
               <img src={`${API}${doctorProfile.profileImage}`} alt={doctorProfile.name}
                 style={{ width:58, height:58, borderRadius:'50%', objectFit:'cover', border:'3px solid #7D9B76' }} />
@@ -232,16 +311,45 @@ export default function DoctorDashboard() {
         ════════════════════════════════════════════════════════ */}
         {activeTab === 'appointments' && (
           <div style={{ background:'white', borderRadius:16, padding:28, border:'1px solid #E8E0D4', animation:'fadeIn 0.3s ease' }}>
-            <h2 style={{ fontSize:22, fontWeight:700, color:'#2C2C2C', marginBottom:20, fontFamily:"'DM Serif Display',serif" }}>{t('tokens')}</h2>
+            <h2 style={{ fontSize:22, fontWeight:700, color:'#2C2C2C', marginBottom:16, fontFamily:"'DM Serif Display',serif" }}>{t('tokens')}</h2>
+
+            {/* ── Filter bar ── */}
+            <div style={{ display:'flex', gap:10, flexWrap:'wrap', alignItems:'center', marginBottom:12, padding:'14px 16px', background:'#FDFCFA', borderRadius:12, border:'1px solid #E8E0D4' }}>
+              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
+                style={{ padding:'8px 12px', border:'1.5px solid #E8E0D4', borderRadius:8, fontSize:13, fontFamily:"'DM Sans',sans-serif", color:'#2C2C2C', background:'white' }}>
+                <option value="all">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)}
+                style={{ padding:'8px 12px', border:'1.5px solid #E8E0D4', borderRadius:8, fontSize:13, fontFamily:"'DM Sans',sans-serif", color:'#2C2C2C', background:'white' }} />
+              <input type="text" value={searchName} onChange={e => setSearchName(e.target.value)}
+                placeholder="Search patient name..."
+                style={{ flex:1, minWidth:160, padding:'8px 12px', border:'1.5px solid #E8E0D4', borderRadius:8, fontSize:13, fontFamily:"'DM Sans',sans-serif", color:'#2C2C2C', background:'white' }} />
+              <button onClick={() => { setFilterStatus('all'); setFilterDate(''); setSearchName(''); }}
+                style={{ padding:'8px 14px', background:'#F2EDE3', color:'#5C5C5C', border:'none', borderRadius:8, fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                Clear Filters
+              </button>
+            </div>
+            <p style={{ fontSize:12, color:'#9C9C9C', marginBottom:16 }}>
+              Showing {filteredTokens.length} of {tokens.length} appointments
+            </p>
 
             {tokens.length === 0 ? (
               <div style={{ textAlign:'center', padding:'48px 0', color:'#9C9C9C' }}>
                 <div style={{ fontSize:44, marginBottom:12 }}>📋</div>
                 <p style={{ fontSize:16 }}>{t('noTokens')}</p>
               </div>
+            ) : filteredTokens.length === 0 ? (
+              <div style={{ textAlign:'center', padding:'32px 0', color:'#9C9C9C' }}>
+                <div style={{ fontSize:36, marginBottom:10 }}>🔍</div>
+                <p style={{ fontSize:15 }}>No appointments match the current filters</p>
+              </div>
             ) : (
               <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
-                {tokens.map((tkn) => (
+                {filteredTokens.map((tkn) => (
                   <div key={tkn._id} className="appt-card"
                     style={{ background:'#FDFCFA', padding:'20px 22px', borderRadius:12, border:'1px solid #E8E0D4' }}>
                     <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:16 }}>
@@ -311,8 +419,21 @@ export default function DoctorDashboard() {
                             {tkn.status==='pending' && <button onClick={() => handleUpdateToken(tkn._id,{status:'confirmed'})} style={btn('#28A745')}>✓ Confirm</button>}
                             {tkn.status==='confirmed' && <button onClick={() => handleUpdateToken(tkn._id,{status:'completed'})} style={btn('#007BFF')}>✓ Complete</button>}
 
-                            <button onClick={() => { const l=prompt('Google Meet link:',tkn.meetLink||''); if(l!==null&&l.trim()) handleUpdateToken(tkn._id,{meetLink:l.trim(),notes:tkn.notes||'',status:tkn.status}); }}
-                              style={btn('#4A6B44')}>🔗 {tkn.meetLink?'Update Meet':'Set Meet'}</button>
+                            {meetEditing[tkn._id] ? (
+                              <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+                                <input type="text" value={meetInputs[tkn._id] || ''}
+                                  onChange={e => setMeetInputs(prev => ({ ...prev, [tkn._id]: e.target.value }))}
+                                  placeholder="Paste Google Meet link here"
+                                  style={{ flex:1, padding:'8px 10px', border:'1.5px solid #E8E0D4', borderRadius:8, fontSize:13, fontFamily:"'DM Sans',sans-serif" }} />
+                                <button onClick={() => { handleUpdateToken(tkn._id, { meetLink: (meetInputs[tkn._id] || '').trim(), notes: tkn.notes||'', status: tkn.status }); setMeetEditing(prev => ({ ...prev, [tkn._id]: false })); }}
+                                  style={btn('#7D9B76')}>Save</button>
+                                <button onClick={() => setMeetEditing(prev => ({ ...prev, [tkn._id]: false }))}
+                                  style={btn('#E8E0D4','#5C5C5C')}>✕</button>
+                              </div>
+                            ) : (
+                              <button onClick={() => { setMeetEditing(prev => ({ ...prev, [tkn._id]: true })); setMeetInputs(prev => ({ ...prev, [tkn._id]: tkn.meetLink || '' })); }}
+                                style={btn('#4A6B44')}>🔗 {tkn.meetLink?'Update Meet':'Set Meet'}</button>
+                            )}
                             <button onClick={() => tkn.meetLink ? window.open(tkn.meetLink.startsWith('http')?tkn.meetLink:`https://${tkn.meetLink}`,'_blank') : window.open('https://meet.google.com/new','_blank')}
                               style={btn('#1a73e8')}>📹 {tkn.meetLink?'Join Meet':'New Meet'}</button>
 
@@ -497,6 +618,9 @@ export default function DoctorDashboard() {
                           <div style={{ padding:'8px 10px' }}>
                             <div style={{ fontSize:11, color:'#5C5C5C', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{file.name}</div>
                             <div style={{ fontSize:10, color:'#9C9C9C', marginTop:2 }}>{file.size}</div>
+                            <div style={{ fontSize:10, color: file.uploadedBy === 'patient' ? '#4A6B44' : '#9C9C9C', marginTop:2 }}>
+                              {file.uploadedBy === 'patient' ? '👤 Patient' : '🩺 Doctor'}
+                            </div>
                           </div>
                         </div>
                       ))}

@@ -1,150 +1,149 @@
 const Prescription = require('../models/Prescription');
-const User = require('../models/User');
+const Token = require('../models/Token');
 
-// @desc    Create prescription
+// @desc    Create prescription linked to a Token (appointment)
 // @route   POST /api/prescriptions
 // @access  Private (Doctor)
-exports.createPrescription = async (req, res, next) => {
+exports.createPrescription = async (req, res) => {
   try {
-    const { patient, appointment, diagnosis, medications, additionalInstructions, followUpDate } = req.body;
+    const { tokenId, diagnosis, medications, instructions, followUpDate } = req.body;
 
-    // Verify patient exists
-    const patientUser = await User.findById(patient);
-    if (!patientUser || patientUser.role !== 'patient') {
-      return res.status(404).json({
-        success: false,
-        message: 'Patient not found'
+    if (!tokenId || !diagnosis) {
+      return res.status(400).json({ success: false, message: 'tokenId and diagnosis are required' });
+    }
+
+    const token = await Token.findById(tokenId);
+    if (!token) {
+      return res.status(404).json({ success: false, message: 'Appointment not found' });
+    }
+
+    // Upsert: update existing prescription for this token+doctor, or create new
+    let prescription = await Prescription.findOne({ token: tokenId, doctor: req.user._id });
+
+    if (prescription) {
+      prescription.diagnosis = diagnosis;
+      prescription.medicationsText = medications || '';
+      prescription.additionalInstructions = instructions || '';
+      prescription.followUpDate = followUpDate || null;
+      await prescription.save();
+    } else {
+      prescription = await Prescription.create({
+        token: tokenId,
+        doctor: req.user._id,
+        diagnosis,
+        medicationsText: medications || '',
+        additionalInstructions: instructions || '',
+        followUpDate: followUpDate || null,
+        medications: []
       });
     }
 
-    const prescription = await Prescription.create({
-      patient,
-      doctor: req.user.id,
-      appointment,
-      diagnosis,
-      medications,
-      additionalInstructions,
-      followUpDate
-    });
+    const populated = await Prescription.findById(prescription._id)
+      .populate('token', 'tokenNumber patient appointmentDate');
 
-    const populatedPrescription = await Prescription.findById(prescription._id)
-      .populate('patient', 'name email phone')
-      .populate('doctor', 'name specialization');
-
-    res.status(201).json({
-      success: true,
-      data: populatedPrescription
-    });
+    res.status(201).json({ success: true, data: populated });
   } catch (error) {
-    next(error);
+    console.error('createPrescription error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to save prescription' });
   }
 };
 
-// @desc    Get prescriptions
+// @desc    Get all prescriptions written by this doctor
 // @route   GET /api/prescriptions
-// @access  Private
-exports.getPrescriptions = async (req, res, next) => {
+// @access  Private (Doctor)
+exports.getPrescriptions = async (req, res) => {
   try {
-    let query;
-
-    if (req.user.role === 'patient') {
-      query = { patient: req.user.id };
-    } else if (req.user.role === 'doctor') {
-      query = { doctor: req.user.id };
-    } else {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized'
-      });
-    }
-
-    const prescriptions = await Prescription.find(query)
-      .populate('patient', 'name email phone')
-      .populate('doctor', 'name specialization')
+    const prescriptions = await Prescription.find({ doctor: req.user._id })
+      .populate('token', 'tokenNumber patient appointmentDate')
       .sort('-createdAt');
 
-    res.status(200).json({
-      success: true,
-      count: prescriptions.length,
-      data: prescriptions
-    });
+    res.status(200).json({ success: true, count: prescriptions.length, data: prescriptions });
   } catch (error) {
-    next(error);
+    console.error('getPrescriptions error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to fetch prescriptions' });
   }
 };
 
 // @desc    Get single prescription
 // @route   GET /api/prescriptions/:id
 // @access  Private
-exports.getPrescription = async (req, res, next) => {
+exports.getPrescription = async (req, res) => {
   try {
     const prescription = await Prescription.findById(req.params.id)
-      .populate('patient', 'name email phone')
-      .populate('doctor', 'name specialization');
+      .populate('token', 'tokenNumber patient appointmentDate');
 
     if (!prescription) {
-      return res.status(404).json({
-        success: false,
-        message: 'Prescription not found'
-      });
+      return res.status(404).json({ success: false, message: 'Prescription not found' });
     }
 
-    // Check ownership
-    if (prescription.patient._id.toString() !== req.user.id &&
-        prescription.doctor._id.toString() !== req.user.id &&
-        req.user.role !== 'ngo') {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to access this prescription'
-      });
+    if (prescription.doctor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
     }
 
-    res.status(200).json({
-      success: true,
-      data: prescription
-    });
+    res.status(200).json({ success: true, data: prescription });
   } catch (error) {
-    next(error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get prescriptions for a token (public — patient looks up by tokenId)
+// @route   GET /api/prescriptions/public?tokenId=X
+// @access  Public
+exports.getPrescriptionByToken = async (req, res) => {
+  try {
+    const { tokenId } = req.query;
+    if (!tokenId) {
+      return res.status(400).json({ success: false, message: 'tokenId is required' });
+    }
+    const prescriptions = await Prescription.find({ token: tokenId })
+      .populate('doctor', 'name specialization')
+      .populate('token', 'tokenNumber patient appointmentDate')
+      .sort('-createdAt');
+    res.status(200).json({ success: true, count: prescriptions.length, data: prescriptions });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get prescriptions for multiple token IDs (public — patient portal)
+// @route   GET /api/prescriptions/public?tokenIds=id1,id2,...
+// @access  Public
+exports.getPrescriptionsByTokenIds = async (req, res) => {
+  try {
+    const { tokenIds } = req.query;
+    if (!tokenIds) return res.json({ success: true, data: [] });
+    const ids = tokenIds.split(',').filter(Boolean);
+    const prescriptions = await Prescription.find({ token: { $in: ids } })
+      .populate('doctor', 'name specialization')
+      .populate('token', 'tokenNumber patient appointmentDate');
+    res.json({ success: true, data: prescriptions });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch prescriptions' });
   }
 };
 
 // @desc    Update prescription
 // @route   PUT /api/prescriptions/:id
 // @access  Private (Doctor)
-exports.updatePrescription = async (req, res, next) => {
+exports.updatePrescription = async (req, res) => {
   try {
     let prescription = await Prescription.findById(req.params.id);
 
     if (!prescription) {
-      return res.status(404).json({
-        success: false,
-        message: 'Prescription not found'
-      });
+      return res.status(404).json({ success: false, message: 'Prescription not found' });
     }
 
-    // Only the doctor who created it can update
-    if (prescription.doctor.toString() !== req.user.id) {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to update this prescription'
-      });
+    if (prescription.doctor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
     }
 
-    prescription = await Prescription.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      {
-        new: true,
-        runValidators: true
-      }
-    ).populate('patient', 'name email phone')
-     .populate('doctor', 'name specialization');
+    prescription = await Prescription.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: false
+    }).populate('token', 'tokenNumber patient appointmentDate');
 
-    res.status(200).json({
-      success: true,
-      data: prescription
-    });
+    res.status(200).json({ success: true, data: prescription });
   } catch (error) {
-    next(error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
