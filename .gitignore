@@ -1,25 +1,43 @@
-@"
-# Dependencies
-node_modules/
-*/node_modules/
-
-# Environment variables — NEVER push this
+# ── Environment files — NEVER commit these ──────────────────
 .env
 backend/.env
+frontend/.env
+frontend/.env.local
+*.env
 
-# Next.js build output
-.next/
+# ── Dependencies ─────────────────────────────────────────────
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# ── Next.js build output ─────────────────────────────────────
 frontend/.next/
+frontend/out/
+.next/
 
-# Uploaded files
+# ── Uploaded files ───────────────────────────────────────────
 backend/uploads/*
 !backend/uploads/.gitkeep
 
-# OS files
-.DS_Store
-Thumbs.db
-
-# Logs
+# ── Logs ─────────────────────────────────────────────────────
 *.log
 npm-debug.log*
-"@ | Out-File -FilePath ".gitignore" -Encoding UTF8
+yarn-debug.log*
+yarn-error.log*
+
+# ── OS files ─────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Editor files ─────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Testing ──────────────────────────────────────────────────
+coverage/
+
+# ── Claude Code ──────────────────────────────────────────────
+.claude/
