@@ -498,6 +498,11 @@ Department of Computer Science & Engineering and Information Technology
 
 ---
 
+## Project Submission Files
+- 📄 [Project Poster](./POSTER.pdf) — A3 research poster
+- 🎥 [Demo Video](./major_video.mp4) — 5-minute project walkthrough
+---
+
 ## 📄 License
 
 This project is licensed under the MIT License.
